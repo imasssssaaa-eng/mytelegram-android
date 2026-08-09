@@ -5,31 +5,20 @@ workflows:
     environment:
       ndk: "21.4.7075529"
     scripts:
-      - name: Pre-check environment
+      - name: Clean everything
         script: |
-          echo "===== ПРОВЕРКА ПЕРЕД СБОРКОЙ ====="
-
-          echo "-- NDK версии в build.gradle файлах --"
-          grep -rn "ndkVersion" . --include="build.gradle"
-
-          echo "-- IP в ConnectionsManager --"
-          grep -n "std::string ipv4" TMessagesProj/jni/tgnet/ConnectionsManager.cpp
-
-          echo "-- Установленный NDK на машине --"
-          ls -1 $ANDROID_SDK_ROOT/ndk/ 2>/dev/null || echo "NDK не найден в SDK"
-
-          echo "-- Наличие CMakeLists.txt --"
-          find . -name "CMakeLists.txt" -maxdepth 3
-
-          echo "-- Остаточный CMake-кеш (может ломать сборку) --"
-          find . -type d -name ".cxx"
-
-          echo "===== ПРОВЕРКА ЗАВЕРШЕНА ====="
+          rm -rf TMessagesProj/.cxx
+          rm -rf TMessagesProj/build
+          rm -rf TMessagesProj/.gradle
+          ./gradlew clean
 
       - name: Build APK
         script: |
-          rm -rf TMessagesProj/.cxx
-          ./gradlew :TMessagesProj_App:assembleDebug --stacktrace > build.log 2>&1
+          ./gradlew :TMessagesProj_App:assembleDebug \
+            --stacktrace \
+            -Pandroid.ndkVersion=21.4.7075529 \
+            -Pandroid.buildToolsVersion=33.0.0 \
+            > build.log 2>&1
           exit $?
     artifacts:
       - "**/*.apk"
