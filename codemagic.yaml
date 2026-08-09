@@ -1,31 +1,24 @@
 workflows:
-  android-build:
-    name: Build MyTelegram Android Client
+  mytelegram-client:
+    name: MyTelegram Client Build
     max_build_duration: 60
-    instance_type: mac_mini_m1
     environment:
-      ndk: 25.2.9519653
-      java: 17
+      android_signing:
+        - keystore_reference
+      ndk_version: "25.2.9519653"
     scripts:
-      - name: Environment Diagnostics
+      - name: Build APK
         script: |
-          echo "=== BUILD ENVIRONMENT LOGS ==="
-          java -version
-          echo "ANDROID_NDK_HOME: $ANDROID_NDK_HOME"
-
-      - name: Build APK with Extended Logging
-        script: |
-          echo "=== STARTING COMPILATION ==="
-          ./gradlew assembleRelease --info --stacktrace
-
+          set +e
+          ./gradlew assembleRelease > build.log 2>&1
+          BUILD_STATUS=$?
+          if [ $BUILD_STATUS -ne 0 ]; then
+            echo "===== ТОЛЬКО ОШИБКИ ====="
+            grep -iE "error:|FAILED|error " build.log | sort -u
+            echo "=========================="
+            exit 1
+          fi
+          echo "Сборка прошла успешно"
     artifacts:
-      - TMessagesProj/build/outputs/apk/**/*.apk
-      - build/outputs/apk/**/*.apk
-
-    publishing:
-      email:
-        recipients:
-          - your_email@example.com
-        notify:
-          failure: true
-          success: true
+      - "**/*.apk"
+      - build.log
