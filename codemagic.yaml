@@ -1,9 +1,9 @@
 workflows:
   telegram-apk-builder:
     name: Сборка Telegram в APK
-    instance_type: linux_x2 # Оптимальная виртуальная машина для сборки Android
+    instance_type: linux_x2
     environment:
-      java: 17 # Большинство современных клиентов Telegram требуют Java 11 или 17
+      java: 17
       vars:
         BUILD_FILE_PATH: "build.gradle"
         APP_VERSION: "1.4.3.3"
@@ -28,32 +28,24 @@ workflows:
 
       - name: Подготовка локального окружения (Android SDK)
         script: |
-          # Указываем путь к Android SDK для Gradle
+          #!/usr/bin/env bash
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 
       - name: Сборка исходного кода в APK
         script: |
           #!/usr/bin/env bash
           
-          # Выдаем права на выполнение скрипту gradle (обязательно для Linux/macOS)
+          # Выдаем права на выполнение скрипту gradle
           chmod +x gradlew
           
           echo "🚀 Начинаем компиляцию приложения (версия $APP_VERSION)..."
           
-          # Команда сборки Release-версии APK. 
-          # Параметр -PversionName передает версию внутрь сборки.
+          # Запуск сборки
           ./gradlew assembleRelease -PversionName=$APP_VERSION
           
           echo "✅ Компиляция завершена!"
 
     artifacts:
-      # Этот путь заставит Codemagic найти все созданные .apk файлы 
-      # и прикрепить их к результатам сборки для скачивания.
+      # Путь для поиска и сохранения готового APK файла
       - app/build/outputs/apk/**/*.apk
-    
-    publishing:
-      # По желанию можно настроить автоматическую отправку собранного APK в Telegram
-      # telegram:
-      #   bot_token: $TG_BOT_TOKEN
-      #   chat_id: $TG_CHAT_ID
       
