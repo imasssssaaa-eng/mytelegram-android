@@ -1,7 +1,7 @@
 workflows:
-  telegram-build-workflow: # <-- Имя исправлено здесь, чтобы совпадать с вашим запросом
+  telegram-build-workflow:
     name: Сборка Telegram в APK
-    instance_type: linux_x2
+    # Строку instance_type мы убрали, чтобы билд запустился на бесплатном тарифе
     environment:
       java: 17
       vars:
