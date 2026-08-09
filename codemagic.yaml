@@ -1,5 +1,5 @@
 workflows:
-  telegram-apk-builder:
+  telegram-build-workflow: # <-- Имя исправлено здесь, чтобы совпадать с вашим запросом
     name: Сборка Telegram в APK
     instance_type: linux_x2
     environment:
