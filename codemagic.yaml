@@ -3,7 +3,7 @@ workflows:
     name: MyTelegram Client Build
     max_build_duration: 60
     environment:
-      ndk: "25.2.9519653"
+      ndk: "26.1.10909125"
     scripts:
       - name: Build APK
         script: |
