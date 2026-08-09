@@ -1,9 +1,9 @@
 workflows:
   telegram-build-workflow:
     name: Сборка Telegram в APK
-    # Строку instance_type мы убрали, чтобы билд запустился на бесплатном тарифе
     environment:
       java: 17
+      python: 3.10
       vars:
         BUILD_FILE_PATH: "build.gradle"
         APP_VERSION: "1.4.3.3"
@@ -13,39 +13,37 @@ workflows:
           #!/usr/bin/env bash
           set -e
           
-          echo "🔍 Проверка изменений в $BUILD_FILE_PATH..."
           if git log -1 --name-only | grep -q "$BUILD_FILE_PATH"; then
               echo "✅ Файл сборки был изменен в последнем коммите."
-          else
-              echo "ℹ️ Файл сборки не изменялся, продолжаем..."
           fi
           
           if [ ! -f "$BUILD_FILE_PATH" ]; then
-              echo "❌ ОШИБКА: Файл $BUILD_FILE_PATH не найден в корне проекта!"
+              echo "❌ ОШИБКА: Файл $BUILD_FILE_PATH не найден!"
               exit 1
           fi
-          echo "✅ Файл найден. Переходим к сборке APK."
 
-      - name: Подготовка локального окружения (Android SDK)
+      - name: Установка системных зависимостей (Python plugins)
+        script: |
+          #!/usr/bin/env bash
+          # Устанавливаем pyrogram и другие модули, необходимые для работы плагинов
+          echo "📦 Установка pyrogram..."
+          pip3 install pyrogram
+
+      - name: Подготовка локального окружения
         script: |
           #!/usr/bin/env bash
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 
-      - name: Сборка исходного кода в APK
+      - name: Сборка исходников в APK-файл
         script: |
           #!/usr/bin/env bash
-          
-          # Выдаем права на выполнение скрипту gradle
           chmod +x gradlew
+          echo "🚀 Начинаем полную компиляцию всех файлов в APK..."
           
-          echo "🚀 Начинаем компиляцию приложения (версия $APP_VERSION)..."
-          
-          # Запуск сборки
+          # Запуск сборки. Gradle сам соберет весь код, ресурсы и библиотеки в один файл
           ./gradlew assembleRelease -PversionName=$APP_VERSION
-          
-          echo "✅ Компиляция завершена!"
 
     artifacts:
-      # Путь для поиска и сохранения готового APK файла
-      - app/build/outputs/apk/**/*.apk
+      # Захватываем APK из любой папки (app, TMessagesProj и т.д.), чтобы кнопка скачивания точно появилась
+      - "**/build/outputs/apk/**/*.apk"
       
