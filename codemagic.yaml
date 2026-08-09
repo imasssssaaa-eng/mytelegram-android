@@ -2,7 +2,7 @@ workflows:
   mytelegram-client:
     name: MyTelegram Client Build
     max_build_duration: 60
-    instance_type: linux_x2
+    instance_type: linux
     environment:
       ndk: "21.4.7075529"
     scripts:
