@@ -3,14 +3,12 @@ workflows:
     name: MyTelegram Client Build
     max_build_duration: 60
     environment:
-      android_signing:
-        - keystore_reference
       ndk: "25.2.9519653"
     scripts:
       - name: Build APK
         script: |
           set +e
-          ./gradlew assembleRelease > build.log 2>&1
+          ./gradlew assembleDebug > build.log 2>&1
           BUILD_STATUS=$?
           if [ $BUILD_STATUS -ne 0 ]; then
             echo "===== ТОЛЬКО ОШИБКИ ====="
