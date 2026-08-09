@@ -1,45 +1,59 @@
 workflows:
-  telegram-build-workflow:
-    name: Сборка Telegram клиента
+  telegram-apk-builder:
+    name: Сборка Telegram в APK
+    instance_type: linux_x2 # Оптимальная виртуальная машина для сборки Android
     environment:
+      java: 17 # Большинство современных клиентов Telegram требуют Java 11 или 17
       vars:
-        # Укажите точное имя файла или путь к нему
-        BUILD_FILE_PATH: "build.gradle" # Например: "Telegram/build.gradle" или "Makefile"
+        BUILD_FILE_PATH: "build.gradle"
+        APP_VERSION: "1.4.3.3"
     scripts:
       - name: Проверка логов Git и наличия файла сборки
         script: |
           #!/usr/bin/env bash
-          set -e # Останавливает выполнение скрипта при любой ошибке
+          set -e
           
-          echo "================================================="
-          echo "🔍 Проверка логов Git (изменения в последнем коммите)"
-          echo "================================================="
-          
-          # Проверяем, есть ли нужный файл в списке измененных файлов последнего коммита
+          echo "🔍 Проверка изменений в $BUILD_FILE_PATH..."
           if git log -1 --name-only | grep -q "$BUILD_FILE_PATH"; then
-              echo "✅ Файл сборки ($BUILD_FILE_PATH) был обновлен в этом коммите."
+              echo "✅ Файл сборки был изменен в последнем коммите."
           else
-              echo "ℹ️ Файл сборки ($BUILD_FILE_PATH) не изменялся в текущем коммите."
+              echo "ℹ️ Файл сборки не изменялся, продолжаем..."
           fi
-
-          echo "================================================="
-          echo "📁 Проверка наличия файла в репозитории"
-          echo "================================================="
           
-          # Физическая проверка существования файла перед стартом сборки
-          if [ -f "$BUILD_FILE_PATH" ]; then
-              echo "✅ Файл сборки успешно найден. Подготовка к сборке..."
-          else
-              echo "❌ КРИТИЧЕСКАЯ ОШИБКА: Файл $BUILD_FILE_PATH не найден в скачанном с GitHub репозитории!"
-              exit 1 # Команда exit 1 прервет пайплайн Codemagic
+          if [ ! -f "$BUILD_FILE_PATH" ]; then
+              echo "❌ ОШИБКА: Файл $BUILD_FILE_PATH не найден в корне проекта!"
+              exit 1
           fi
+          echo "✅ Файл найден. Переходим к сборке APK."
 
-      - name: Запуск процесса сборки
+      - name: Подготовка локального окружения (Android SDK)
+        script: |
+          # Указываем путь к Android SDK для Gradle
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+      - name: Сборка исходного кода в APK
         script: |
           #!/usr/bin/env bash
-          echo "🚀 Начинаем сборку..."
-          # Здесь размещаются ваши основные команды для сборки (например, ./gradlew assembleRelease)
           
+          # Выдаем права на выполнение скрипту gradle (обязательно для Linux/macOS)
+          chmod +x gradlew
+          
+          echo "🚀 Начинаем компиляцию приложения (версия $APP_VERSION)..."
+          
+          # Команда сборки Release-версии APK. 
+          # Параметр -PversionName передает версию внутрь сборки.
+          ./gradlew assembleRelease -PversionName=$APP_VERSION
+          
+          echo "✅ Компиляция завершена!"
+
     artifacts:
-      - app/build/outputs/**/*.apk # Укажите путь к вашим готовым артефактам
+      # Этот путь заставит Codemagic найти все созданные .apk файлы 
+      # и прикрепить их к результатам сборки для скачивания.
+      - app/build/outputs/apk/**/*.apk
+    
+    publishing:
+      # По желанию можно настроить автоматическую отправку собранного APK в Telegram
+      # telegram:
+      #   bot_token: $TG_BOT_TOKEN
+      #   chat_id: $TG_CHAT_ID
       
