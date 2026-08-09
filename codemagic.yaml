@@ -5,9 +5,11 @@ workflows:
     environment:
       ndk: "21.4.7075529"
     scripts:
-      - name: Fix NDK quarantine
+      - name: Fix NDK toolchain signature
         script: |
-          sudo xattr -rd com.apple.quarantine /usr/local/share/android-sdk/ndk/21.4.7075529 || true
+          NDK_BIN="/usr/local/share/android-sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/darwin-x86_64/bin"
+          sudo xattr -rd com.apple.quarantine "$NDK_BIN" || true
+          sudo codesign --force --deep --sign - "$NDK_BIN"/* || true
       - name: Build APK
         script: |
           set -o pipefail
