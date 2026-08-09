@@ -9,6 +9,9 @@ workflows:
         script: |
           sudo xattr -rd com.apple.quarantine /usr/local/share/android-sdk/ndk/21.4.7075529 || true
       - name: Build APK
-        script: ./gradlew :TMessagesProj_App:assembleDebug --stacktrace
+        script: |
+          set -o pipefail
+          ./gradlew :TMessagesProj_App:assembleDebug --stacktrace 2>&1 | tee build.log
     artifacts:
       - "**/*.apk"
+      - build.log
