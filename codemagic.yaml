@@ -2,10 +2,12 @@ workflows:
   mytelegram-client:
     name: MyTelegram Client Build
     max_build_duration: 60
-    instance_type: linux
     environment:
       ndk: "21.4.7075529"
     scripts:
+      - name: Fix NDK quarantine
+        script: |
+          sudo xattr -rd com.apple.quarantine /usr/local/share/android-sdk/ndk/21.4.7075529 || true
       - name: Build APK
         script: ./gradlew :TMessagesProj_App:assembleDebug --stacktrace
     artifacts:
