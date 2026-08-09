@@ -3,7 +3,6 @@ workflows:
     name: Сборка Telegram в APK
     environment:
       java: 17
-      python: 3.10
       vars:
         BUILD_FILE_PATH: "build.gradle"
         APP_VERSION: "1.4.3.3"
@@ -25,7 +24,6 @@ workflows:
       - name: Установка системных зависимостей (Python plugins)
         script: |
           #!/usr/bin/env bash
-          # Устанавливаем pyrogram и другие модули, необходимые для работы плагинов
           echo "📦 Установка pyrogram..."
           pip3 install pyrogram
 
@@ -40,10 +38,8 @@ workflows:
           chmod +x gradlew
           echo "🚀 Начинаем полную компиляцию всех файлов в APK..."
           
-          # Запуск сборки. Gradle сам соберет весь код, ресурсы и библиотеки в один файл
           ./gradlew assembleRelease -PversionName=$APP_VERSION
 
     artifacts:
-      # Захватываем APK из любой папки (app, TMessagesProj и т.д.), чтобы кнопка скачивания точно появилась
       - "**/build/outputs/apk/**/*.apk"
       
