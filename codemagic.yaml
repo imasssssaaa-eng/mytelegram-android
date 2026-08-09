@@ -2,24 +2,11 @@ workflows:
   mytelegram-client:
     name: MyTelegram Client Build
     max_build_duration: 60
+    instance_type: linux_x2
     environment:
       ndk: "21.4.7075529"
     scripts:
-      - name: Clean everything
-        script: |
-          rm -rf TMessagesProj/.cxx
-          rm -rf TMessagesProj/build
-          rm -rf TMessagesProj/.gradle
-          ./gradlew clean
-
       - name: Build APK
-        script: |
-          ./gradlew :TMessagesProj_App:assembleDebug \
-            --stacktrace \
-            -Pandroid.ndkVersion=21.4.7075529 \
-            -Pandroid.buildToolsVersion=33.0.0 \
-            > build.log 2>&1
-          exit $?
+        script: ./gradlew :TMessagesProj_App:assembleDebug --stacktrace
     artifacts:
       - "**/*.apk"
-      - build.log
