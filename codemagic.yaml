@@ -1,19 +1,45 @@
 workflows:
-  mytelegram-client:
-    name: MyTelegram Client Build
-    max_build_duration: 60
+  telegram-build-workflow:
+    name: Сборка Telegram клиента
     environment:
-      ndk: "21.4.7075529"
+      vars:
+        # Укажите точное имя файла или путь к нему
+        BUILD_FILE_PATH: "build.gradle" # Например: "Telegram/build.gradle" или "Makefile"
     scripts:
-      - name: Fix NDK toolchain signature
+      - name: Проверка логов Git и наличия файла сборки
         script: |
-          NDK_BIN="/usr/local/share/android-sdk/ndk/21.4.7075529/toolchains/llvm/prebuilt/darwin-x86_64/bin"
-          sudo xattr -rd com.apple.quarantine "$NDK_BIN" || true
-          sudo codesign --force --deep --sign - "$NDK_BIN"/* || true
-      - name: Build APK
+          #!/usr/bin/env bash
+          set -e # Останавливает выполнение скрипта при любой ошибке
+          
+          echo "================================================="
+          echo "🔍 Проверка логов Git (изменения в последнем коммите)"
+          echo "================================================="
+          
+          # Проверяем, есть ли нужный файл в списке измененных файлов последнего коммита
+          if git log -1 --name-only | grep -q "$BUILD_FILE_PATH"; then
+              echo "✅ Файл сборки ($BUILD_FILE_PATH) был обновлен в этом коммите."
+          else
+              echo "ℹ️ Файл сборки ($BUILD_FILE_PATH) не изменялся в текущем коммите."
+          fi
+
+          echo "================================================="
+          echo "📁 Проверка наличия файла в репозитории"
+          echo "================================================="
+          
+          # Физическая проверка существования файла перед стартом сборки
+          if [ -f "$BUILD_FILE_PATH" ]; then
+              echo "✅ Файл сборки успешно найден. Подготовка к сборке..."
+          else
+              echo "❌ КРИТИЧЕСКАЯ ОШИБКА: Файл $BUILD_FILE_PATH не найден в скачанном с GitHub репозитории!"
+              exit 1 # Команда exit 1 прервет пайплайн Codemagic
+          fi
+
+      - name: Запуск процесса сборки
         script: |
-          set -o pipefail
-          ./gradlew :TMessagesProj_App:assembleDebug --stacktrace 2>&1 | tee build.log
+          #!/usr/bin/env bash
+          echo "🚀 Начинаем сборку..."
+          # Здесь размещаются ваши основные команды для сборки (например, ./gradlew assembleRelease)
+          
     artifacts:
-      - "**/*.apk"
-      - build.log
+      - app/build/outputs/**/*.apk # Укажите путь к вашим готовым артефактам
+      
