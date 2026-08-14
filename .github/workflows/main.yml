@@ -1,24 +1,18 @@
-name: Build Server Binaries
+# Вставить этот шаг в существующий .github/workflows/*.yml
+# ПЕРЕД шагом сборки (./gradlew assembleRelease и т.п.)
 
-on:
-  workflow_dispatch:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up .NET 8
-        uses: actions/setup-dotnet@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          dotnet-version: '8.0.x'
+          python-version: '3.x'
 
-      - name: Publish all services
-        run: dotnet publish source -c Release -r linux-bionic-arm64 --self-contained -o build-output
+      - name: Inject local auth stub (mytg.py)
+        run: python3 mytg.py .
+        # "." — потому что патчер запускается прямо из корня
+        # клонированного репозитория mytelegram-android на CI-раннере
 
-      - name: Upload binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: server-binaries
-          path: build-output/
+      - name: Build APK
+        run: ./gradlew assembleRelease
