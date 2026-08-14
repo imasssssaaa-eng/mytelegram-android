@@ -1,8 +1,6 @@
-name: Build APK
+name: Build Server Binaries
 
 on:
-  push:
-    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
@@ -11,20 +9,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          dotnet-version: '8.0.x'
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+      - name: Publish all services
+        run: dotnet publish source -c Release -r linux-bionic-arm64 --self-contained -o build-output
 
-      - name: Build APK
-        run: ./gradlew :TMessagesProj_App:assembleDebug --stacktrace
-
-      - name: Upload APK
+      - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: "**/build/outputs/apk/**/*.apk"
+          name: server-binaries
+          path: build-output/
