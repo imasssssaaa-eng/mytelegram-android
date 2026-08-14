@@ -1,8 +1,22 @@
-# Вставить этот шаг в существующий .github/workflows/*.yml
-# ПЕРЕД шагом сборки (./gradlew assembleRelease и т.п.)
+name: Build APK
 
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -11,8 +25,15 @@
 
       - name: Inject local auth stub (mytg.py)
         run: python3 mytg.py .
-        # "." — потому что патчер запускается прямо из корня
-        # клонированного репозитория mytelegram-android на CI-раннере
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
       - name: Build APK
         run: ./gradlew assembleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: '**/*.apk'
